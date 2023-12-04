@@ -67,21 +67,9 @@ func main() {
 
 	var workspace *dagger.Directory
 	if *local {
-		contextDir := client.Host().Directory(".")
-		dockerfile := client.Host().File(*dockerfilePath)
-		workspace = contextDir.WithFile("Dockerfile", dockerfile)
+		workspace = prepareLocalWorkspace(client, *dockerfilePath)
 	} else {
-		// Retrieve path of authentication agent socket from host
-		sshAgentPath := os.Getenv("SSH_AUTH_SOCK")
-		contextDir := client.
-			Git(*gitRepository, dagger.GitOpts{
-				SSHAuthSocket: client.Host().UnixSocket(sshAgentPath),
-			}).
-			Branch(*gitRepositoryBranch).
-			Tree()
-
-		dockerfile := contextDir.File(*dockerfilePath)
-		workspace = contextDir.WithFile("Dockerfile", dockerfile)
+		workspace = prepareRemoteWorkspace(client, *gitRepository, *gitRepositoryBranch, *dockerfilePath)
 	}
 
 	ref, err := client.
@@ -101,4 +89,25 @@ func main() {
 	}
 
 	fmt.Printf("Published image to :%s\n", ref)
+}
+
+func prepareLocalWorkspace(client *dagger.Client, dockerfilePath string) *dagger.Directory {
+	contextDir := client.Host().Directory(".")
+	dockerfile := client.Host().File(dockerfilePath)
+	return contextDir.WithFile("Dockerfile", dockerfile)
+}
+
+func prepareRemoteWorkspace(client *dagger.Client, repository, branch, dockerfilePath string) *dagger.Directory {
+	// Retrieve path of authentication agent socket from host
+	sshAgentPath := os.Getenv("SSH_AUTH_SOCK")
+
+	contextDir := client.
+		Git(repository, dagger.GitOpts{
+			SSHAuthSocket: client.Host().UnixSocket(sshAgentPath),
+		}).
+		Branch(branch).
+		Tree()
+
+	dockerfile := contextDir.File(dockerfilePath)
+	return contextDir.WithFile("Dockerfile", dockerfile)
 }

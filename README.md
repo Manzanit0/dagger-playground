@@ -1,4 +1,6 @@
-# dagger-playground
+# 🏖 Dagger.io playground
+
+A scratchpad playing with https://dagger.io
 
 ## Pipelines
 

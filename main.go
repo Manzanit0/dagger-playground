@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"os"
+	"strings"
+
+	flag "github.com/spf13/pflag"
 
 	"dagger.io/dagger"
 )
@@ -13,7 +15,8 @@ var (
 	dockerfilePath = flag.String("dockerfile", "Dockerfile", "path to the dockerfile")
 	awsRegion      = flag.String("aws-region", "us-east-1", "AWS region where to upload Docker image to ECR")
 	awsECRURI      = flag.String("aws-ecr-uri", "", "AWS ECR URI")
-	repositoryName = flag.String("repository", "test-dagger", "Image repository name")
+	repositoryName = flag.String("repository", "delete-me", "Image repository name")
+	buildArgs      = flag.StringSlice("build-arg", nil, "Dockerfile build arguments")
 )
 
 func main() {
@@ -21,6 +24,16 @@ func main() {
 
 	if awsECRURI == nil && *awsECRURI == "" {
 		panic("you need to provide an ECR URI with the -aws-ecr-uri parameter")
+	}
+
+	var args []dagger.BuildArg
+	for _, arg := range *buildArgs {
+		s := strings.Split(arg, "=")
+		if len(s) != 2 {
+			panic("invalid argument: " + arg + ". Use the format NAME=VALUE.")
+		}
+
+		args = append(args, dagger.BuildArg{Name: s[0], Value: s[1]})
 	}
 
 	ctx := context.Background()
@@ -64,10 +77,7 @@ func main() {
 		).
 		Build(workspace, dagger.ContainerBuildOpts{
 			Dockerfile: "Dockerfile",
-			BuildArgs: []dagger.BuildArg{
-				{Name: "SERVICE_NAME", Value: "foo"},
-				{Name: "SERVICE_VERSION", Value: "v1-daggerbuild"},
-			},
+			BuildArgs:  args,
 		}).
 		Publish(ctx, registry.uri+"/"+*repositoryName)
 	if err != nil {

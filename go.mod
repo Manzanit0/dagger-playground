@@ -6,6 +6,7 @@ require (
 	dagger.io/dagger v0.9.3
 	github.com/aws/aws-sdk-go-v2/config v1.25.11
 	github.com/aws/aws-sdk-go-v2/service/ecr v1.24.2
+	github.com/spf13/pflag v1.0.5
 )
 
 require (

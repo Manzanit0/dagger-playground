@@ -19,7 +19,7 @@ Some pipelines I'm thinking might be interesting to try out:
 
 ### Deploy
 
-- [ ] Open PR to GitHub repository with update to a Flux `HelmRelease`
+- [ ] Open PR to GitHub repository with an update to a YAML file (hello Flux)
 
 ## Application
 

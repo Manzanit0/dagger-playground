@@ -29,14 +29,9 @@ func main() {
 		panic("you need to provide an ECR URI with the -aws-ecr-uri parameter")
 	}
 
-	var args []dagger.BuildArg
-	for _, arg := range *buildArgs {
-		s := strings.Split(arg, "=")
-		if len(s) != 2 {
-			panic("invalid argument: " + arg + ". Use the format NAME=VALUE.")
-		}
-
-		args = append(args, dagger.BuildArg{Name: s[0], Value: s[1]})
+	args, err := parseBuildArgs(buildArgs)
+	if err != nil {
+		panic(err)
 	}
 
 	ctx := context.Background()
@@ -110,4 +105,18 @@ func prepareRemoteWorkspace(client *dagger.Client, repository, branch, dockerfil
 
 	dockerfile := contextDir.File(dockerfilePath)
 	return contextDir.WithFile("Dockerfile", dockerfile)
+}
+
+func parseBuildArgs(argss *[]string) ([]dagger.BuildArg, error) {
+	var parsed []dagger.BuildArg
+	for _, arg := range *argss {
+		s := strings.Split(arg, "=")
+		if len(s) != 2 {
+			return parsed, fmt.Errorf("invalid argument: %s. Use the format NAME=VALUE.", s)
+		}
+
+		parsed = append(parsed, dagger.BuildArg{Name: s[0], Value: s[1]})
+	}
+
+	return parsed, nil
 }

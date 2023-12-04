@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/manzanit0/dagger-playground/pkg/aws"
 	flag "github.com/spf13/pflag"
 
 	"dagger.io/dagger"
@@ -42,12 +43,15 @@ func main() {
 	}
 	defer client.Close()
 
-	awsClient, err := NewAWSClient(ctx, *awsRegion)
+	awsClient, err := aws.NewClient(ctx, *awsRegion)
 	if err != nil {
 		panic(err)
 	}
 
-	registry := InitRegistry(ctx, awsClient, *awsECRURI)
+	username, password, err := awsClient.GetECRUsernamePassword(ctx)
+	if err != nil {
+		panic(err)
+	}
 
 	exists, err := awsClient.EnsureRepositoryExists(ctx, *repositoryName)
 	if err != nil {
@@ -70,15 +74,15 @@ func main() {
 	ref, err := client.
 		Container().
 		WithRegistryAuth(
-			registry.uri,
-			registry.username,
-			client.SetSecret("registryPassword", registry.password),
+			*awsECRURI,
+			username,
+			client.SetSecret("registryPassword", password),
 		).
 		Build(workspace, dagger.ContainerBuildOpts{
 			Dockerfile: "Dockerfile",
 			BuildArgs:  args,
 		}).
-		Publish(ctx, registry.uri+"/"+*repositoryName)
+		Publish(ctx, *awsECRURI+"/"+*repositoryName)
 	if err != nil {
 		panic(err)
 	}

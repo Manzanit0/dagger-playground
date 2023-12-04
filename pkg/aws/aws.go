@@ -1,4 +1,4 @@
-package main
+package aws
 
 import (
 	"context"
@@ -14,10 +14,10 @@ import (
 
 type AWSClient struct {
 	region string
-	cEcr   *ecr.Client
+	ECR    *ecr.Client
 }
 
-func NewAWSClient(ctx context.Context, region string) (*AWSClient, error) {
+func NewClient(ctx context.Context, region string) (*AWSClient, error) {
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		return nil, err
@@ -26,7 +26,7 @@ func NewAWSClient(ctx context.Context, region string) (*AWSClient, error) {
 	cfg.Region = region
 	client := &AWSClient{
 		region: region,
-		cEcr:   ecr.NewFromConfig(cfg),
+		ECR:    ecr.NewFromConfig(cfg),
 	}
 
 	return client, nil
@@ -34,7 +34,7 @@ func NewAWSClient(ctx context.Context, region string) (*AWSClient, error) {
 
 func (c *AWSClient) GetECRAuthorizationToken(ctx context.Context) (string, error) {
 	log.Printf("ECR GetAuthorizationToken for region %q", c.region)
-	out, err := c.cEcr.GetAuthorizationToken(ctx, &ecr.GetAuthorizationTokenInput{})
+	out, err := c.ECR.GetAuthorizationToken(ctx, &ecr.GetAuthorizationTokenInput{})
 	if err != nil {
 		return "", err
 	}
@@ -47,7 +47,6 @@ func (c *AWSClient) GetECRAuthorizationToken(ctx context.Context) (string, error
 	return authToken, nil
 }
 
-// GetECRUsernamePassword fetches ECR auth token and converts it to username / password
 func (c *AWSClient) GetECRUsernamePassword(ctx context.Context) (string, string, error) {
 	token, err := c.GetECRAuthorizationToken(ctx)
 	if err != nil {
@@ -68,7 +67,7 @@ func (c *AWSClient) GetECRUsernamePassword(ctx context.Context) (string, string,
 }
 
 func (c *AWSClient) EnsureRepositoryExists(ctx context.Context, name string) (bool, error) {
-	list, err := c.cEcr.DescribeRepositories(ctx, &ecr.DescribeRepositoriesInput{RepositoryNames: []string{name}})
+	list, err := c.ECR.DescribeRepositories(ctx, &ecr.DescribeRepositoriesInput{RepositoryNames: []string{name}})
 	if err != nil && !strings.Contains(err.Error(), "RepositoryNotFoundException") {
 		return false, fmt.Errorf("create repository: %w", err)
 	}
@@ -77,7 +76,7 @@ func (c *AWSClient) EnsureRepositoryExists(ctx context.Context, name string) (bo
 		return true, nil
 	}
 
-	_, err = c.cEcr.CreateRepository(ctx, &ecr.CreateRepositoryInput{
+	_, err = c.ECR.CreateRepository(ctx, &ecr.CreateRepositoryInput{
 		RepositoryName:     &name,
 		ImageTagMutability: types.ImageTagMutabilityMutable,
 		Tags:               []types.Tag{{Key: s("created-by"), Value: s("dagger")}},

@@ -12,11 +12,14 @@ import (
 )
 
 var (
-	dockerfilePath = flag.String("dockerfile", "Dockerfile", "path to the dockerfile")
-	awsRegion      = flag.String("aws-region", "us-east-1", "AWS region where to upload Docker image to ECR")
-	awsECRURI      = flag.String("aws-ecr-uri", "", "AWS ECR URI")
-	repositoryName = flag.String("repository", "delete-me", "Image repository name")
-	buildArgs      = flag.StringSlice("build-arg", nil, "Dockerfile build arguments")
+	gitRepository       = flag.String("git-repository", "", "git repository to build from")
+	gitRepositoryBranch = flag.String("git-repository-branch", "main", "branch to checkout")
+	local               = flag.Bool("local-build", false, "build from local context, not remote repository")
+	dockerfilePath      = flag.String("dockerfile", "Dockerfile", "path to the dockerfile")
+	awsRegion           = flag.String("aws-region", "us-east-1", "AWS region where to upload Docker image to ECR")
+	awsECRURI           = flag.String("aws-ecr-uri", "", "AWS ECR URI")
+	repositoryName      = flag.String("aws-ecr-repository", "delete-me", "Image repository name")
+	buildArgs           = flag.StringSlice("build-arg", nil, "Dockerfile build arguments")
 )
 
 func main() {
@@ -62,11 +65,24 @@ func main() {
 		fmt.Println("Created ECR repository")
 	}
 
-	contextDir := client.Host().Directory(".")
+	var workspace *dagger.Directory
+	if *local {
+		contextDir := client.Host().Directory(".")
+		dockerfile := client.Host().File(*dockerfilePath)
+		workspace = contextDir.WithFile("Dockerfile", dockerfile)
+	} else {
+		// Retrieve path of authentication agent socket from host
+		sshAgentPath := os.Getenv("SSH_AUTH_SOCK")
+		contextDir := client.
+			Git(*gitRepository, dagger.GitOpts{
+				SSHAuthSocket: client.Host().UnixSocket(sshAgentPath),
+			}).
+			Branch(*gitRepositoryBranch).
+			Tree()
 
-	dockerfile := client.Host().File(*dockerfilePath)
-
-	workspace := contextDir.WithFile("Dockerfile", dockerfile)
+		dockerfile := contextDir.File(*dockerfilePath)
+		workspace = contextDir.WithFile("Dockerfile", dockerfile)
+	}
 
 	ref, err := client.
 		Container().

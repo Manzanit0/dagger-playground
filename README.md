@@ -21,6 +21,14 @@ Thoughts: Dagger didn't really help here. While it does provide a super-clean ab
 
 Thoughs: I think this is the ideal use-case for Dagger. A simple query to a git repository and building a container. It was a breeze.
 
+```sh
+dagger run go run ./cmd/build \
+    --git-repository git@github.com:Manzanit0/weatherwarnbot.git \
+    --git-repository-branch master \
+    --dockerfile Dockerfile \
+    --aws-ecr-uri=<uri here>
+```
+
 ### Deploy
 
 - [ ] Open PR to GitHub repository with an update to a YAML file (hello Flux)

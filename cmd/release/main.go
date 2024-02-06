@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"sort"
 	"strings"
 
@@ -18,7 +18,7 @@ var (
 func main() {
 	flag.Parse()
 
-	local, _ := ioutil.TempDir("", "go-vcs")
+	local := os.TempDir()
 	repo, err := vcs.NewRepo(*gitRepository, local)
 	if err != nil {
 		panic(err)

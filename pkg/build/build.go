@@ -16,7 +16,7 @@ type BuildAndPushOptions struct {
 	AwsEcrURI            string
 	Local                bool
 	GitRepositoryURL     string
-	GitRepositoryBranch  string
+	GitRepositoryCommit  string
 	DockerfilePath       string
 	// TODO: this is a programatic interface... might as well make it correctly typed, i.e. key/value pairs.
 	BuildArgs []string
@@ -61,7 +61,7 @@ func BuildAndPush(ctx context.Context, opts *BuildAndPushOptions) error {
 	if opts.Local {
 		workspace = prepareLocalWorkspace(client, opts.DockerfilePath)
 	} else {
-		workspace = prepareRemoteWorkspace(client, opts.GitRepositoryURL, opts.GitRepositoryBranch, opts.DockerfilePath)
+		workspace = prepareRemoteWorkspace(client, opts.GitRepositoryURL, opts.GitRepositoryCommit, opts.DockerfilePath)
 	}
 
 	ref, err := client.
@@ -90,7 +90,7 @@ func prepareLocalWorkspace(client *dagger.Client, dockerfilePath string) *dagger
 	return contextDir.WithFile("Dockerfile", dockerfile)
 }
 
-func prepareRemoteWorkspace(client *dagger.Client, repository, branch, dockerfilePath string) *dagger.Directory {
+func prepareRemoteWorkspace(client *dagger.Client, repository, commit, dockerfilePath string) *dagger.Directory {
 	// Retrieve path of authentication agent socket from host
 	sshAgentPath := os.Getenv("SSH_AUTH_SOCK")
 
@@ -98,7 +98,7 @@ func prepareRemoteWorkspace(client *dagger.Client, repository, branch, dockerfil
 		Git(repository, dagger.GitOpts{
 			SSHAuthSocket: client.Host().UnixSocket(sshAgentPath),
 		}).
-		Branch(branch).
+		Commit(commit).
 		Tree()
 
 	dockerfile := contextDir.File(dockerfilePath)

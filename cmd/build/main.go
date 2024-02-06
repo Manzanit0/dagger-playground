@@ -11,7 +11,7 @@ import (
 
 var (
 	gitRepository       = flag.String("git-repository", "", "git repository to build from")
-	gitRepositoryBranch = flag.String("git-repository-branch", "main", "branch to checkout")
+	gitRepositoryCommit = flag.String("git-repository-commit", "HEAD", "branch to checkout")
 	local               = flag.Bool("local-build", false, "build from local context, not remote repository")
 	dockerfilePath      = flag.String("dockerfile", "Dockerfile", "path to the dockerfile")
 	awsRegion           = flag.String("aws-region", "us-east-1", "AWS region where to upload Docker image to ECR")
@@ -34,7 +34,7 @@ func main() {
 		AwsEcrURI:            *awsECRURI,
 		Local:                *local,
 		GitRepositoryURL:     *gitRepository,
-		GitRepositoryBranch:  *gitRepositoryBranch,
+		GitRepositoryCommit:  *gitRepositoryCommit,
 		DockerfilePath:       *dockerfilePath,
 		BuildArgs:            *buildArgs,
 	})

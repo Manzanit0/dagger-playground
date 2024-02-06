@@ -40,8 +40,19 @@ dagger run go run ./cmd/build \
 ## Application
 
 - [x] CLI that applies the pipeline
-- [ ] Service that listens to GH webhooks and applies the pipelines
+- [x] Service that listens to GH webhooks and applies the pipelines
 - [ ] GitHub Action that runs the pipelines ([example](https://docs.dagger.io/620941/github-google-cloud/))
+
+### Running pipelines via GH webhooks
+
+It was actually pleasantly easy to set this up. I created a sample service under `cmd/webhook`. GitHub webhooks give you all the information you need not just to run the build&push pipeline, but also to chain a Slack command or something similar with a diff of the code and other related information.
+
+I'm curious how it will work once the service is dockerised; if running the dagger client will pose some challenges or not. My guess is that it should be fine because when you run `dagger run` it's doing exactly that: running the client inside a container (the dagger engine).
+
+In terms of scaling that in an organisation, I think the challenge is setting up the webhook the right way. I can see two options here: either [an organisation webhook](https://docs.github.com/en/webhooks/types-of-webhooks#organization-webhooks) or a [GitHub App webhook](https://docs.github.com/en/webhooks/types-of-webhooks#github-app-webhooks). I
+not really familiar with the constraints of the GitHub App webhooks, but it does sound like that would be the ideal approach to not get undesired events, i.e. repositories that you don't want to build. I also wonder what would be the right way to set up that application so that it's dead-simple to get it working. The moment you have to start dealing with approval processes and the like to install the app, it starts sucking.
+
+This approach seems overall the best one to scale, as opposed to GitHub actions. The main reason being the ease of rollouts and configuration by teams.
 
 ## Thoughts on Dagger modules
 

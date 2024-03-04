@@ -62,6 +62,8 @@ I'd also need to think about what's the best way of versioning, how to roll thos
 
 ## Thoughts on Dagger modules
 
-I started tinkering with [Dagger modules](https://docs.dagger.io/zenith/developer/go/525021/quickstart), but came across some expected friction when dealing with authentication to providers such as AWS: when you run `dagger call foo`, that wraps the function call in a container which means that the credentials available in the host are no longer available.
+Note: need to try it again; I think I tried it so early there were just a lot of implementation quirks. They might have made `dagger run` and `dagger call` work the same.
 
-A workaround could be to create a set of client id and secret for the dagger module, but this generally isn't the desired outcome since in AWS-land assuming roles tends to be preferred. If that's the case, then not using modules in favour of `dagger run` becomes simpler. We just miss out on the reusable modularity of the "Daggerverse".
+~I started tinkering with [Dagger modules](https://docs.dagger.io/zenith/developer/go/525021/quickstart), but came across some expected friction when dealing with authentication to providers such as AWS: when you run `dagger call foo`, that wraps the function call in a container which means that the credentials available in the host are no longer available.~
+
+~A workaround could be to create a set of client id and secret for the dagger module, but this generally isn't the desired outcome since in AWS-land assuming roles tends to be preferred. If that's the case, then not using modules in favour of `dagger run` becomes simpler. We just miss out on the reusable modularity of the "Daggerverse".~
